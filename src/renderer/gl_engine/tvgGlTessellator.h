@@ -101,10 +101,10 @@ class Stroker final
 
     struct State
     {
-        GlPoint firstPt = {};
-        GlPoint firstPtDir = {};
-        GlPoint prevPt = {};
-        GlPoint prevPtDir = {};
+        Point firstPt = {};
+        Point firstPtDir = {};
+        Point prevPt = {};
+        Point prevPtDir = {};
         bool hasMove = false;
     };
 public:
@@ -127,23 +127,23 @@ private:
 
     void strokeCap();
 
-    void strokeLineTo(const GlPoint &curr);
+    void strokeLineTo(const Point &curr);
 
-    void strokeCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPoint &end);
+    void strokeCubicTo(const Point &cnt1, const Point &cnt2, const Point &end);
 
     void strokeClose();
 
-    void strokeJoin(const GlPoint &dir);
+    void strokeJoin(const Point &dir);
 
-    void strokeRound(const GlPoint &prev, const GlPoint &curr, const GlPoint &center);
+    void strokeRound(const Point &prev, const Point &curr, const Point &center);
 
-    void strokeMiter(const GlPoint &prev, const GlPoint &curr, const GlPoint &center);
+    void strokeMiter(const Point &prev, const Point &curr, const Point &center);
 
-    void strokeBevel(const GlPoint &prev, const GlPoint &curr, const GlPoint &center);
+    void strokeBevel(const Point &prev, const Point &curr, const Point &center);
 
-    void strokeSquare(const GlPoint& p, const GlPoint& outDir);
+    void strokeSquare(const Point& p, const Point& outDir);
 
-    void strokeRound(const GlPoint& p, const GlPoint& outDir);
+    void strokeRound(const Point& p, const Point& outDir);
 private:
     Array<float>* mResGlPoints;
     Array<uint32_t>* mResIndices;
@@ -153,8 +153,8 @@ private:
     StrokeCap mStrokeCap = StrokeCap::Square;
     StrokeJoin mStrokeJoin = StrokeJoin::Bevel;
     State mStrokeState = {};
-    GlPoint mLeftTop = {};
-    GlPoint mRightBottom = {};
+    Point mLeftTop = {};
+    Point mRightBottom = {};
 };
 
 class DashStroke
@@ -167,12 +167,12 @@ public:
     void doStroke(const PathCommand* cmds, uint32_t cmd_count, const Point* pts, uint32_t pts_count);
 
 private:
-    void dashLineTo(const GlPoint &pt);
-    void dashCubicTo(const GlPoint &pt1, const GlPoint &pt2, const GlPoint &pt3);
+    void dashLineTo(const Point &pt);
+    void dashCubicTo(const Point &pt1, const Point &pt2, const Point &pt3);
 
-    void moveTo(const GlPoint &pt);
-    void lineTo(const GlPoint &pt);
-    void cubicTo(const GlPoint &pt1, const GlPoint &pt2, const GlPoint &pt3);
+    void moveTo(const Point &pt);
+    void lineTo(const Point &pt);
+    void cubicTo(const Point &pt1, const Point &pt2, const Point &pt3);
 
 private:
     Array<PathCommand>* mCmds;
@@ -182,8 +182,8 @@ private:
     float mCurrLen;
     int32_t mCurrIdx;
     bool mCurOpGap;
-    GlPoint mPtStart;
-    GlPoint mPtCur;
+    Point mPtStart;
+    Point mPtCur;
 };
 
 class BWTessellator
@@ -203,8 +203,8 @@ private:
 private:
     Array<float>* mResPoints;
     Array<uint32_t>* mResIndices;
-    GlPoint mLeftTop = {};
-    GlPoint mRightBottom = {};
+    Point mLeftTop = {};
+    Point mRightBottom = {};
 };
 
 }  // namespace tvg

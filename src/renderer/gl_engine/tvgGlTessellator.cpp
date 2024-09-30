@@ -104,12 +104,14 @@ struct Vertex : public Object
     // right enclosing edge during sweep line
     Edge *right = nullptr;
 
-    GlPoint point = {};
+    Point point = {};
 
     Vertex() = default;
 
-    Vertex(const GlPoint &p) : point(ceilf(p.x * 100.f) / 100.f, ceilf(p.y * 100.f) / 100.f)
+    Vertex(const Point &p)
     {
+        point.x = ceilf(p.x * 100.f) / 100.f;
+        point.y = ceilf(p.y * 100.f) / 100.f;
     }
 
     ~Vertex() override = default;
@@ -132,7 +134,7 @@ struct VertexCompare
         return compare(v1->point, v2->point);
     }
 
-    static bool compare(const GlPoint &a, const GlPoint &b);
+    static bool compare(const Point &a, const Point &b);
 };
 
 
@@ -193,20 +195,20 @@ struct Edge : public Object
     // https://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
     // return > 0 means point in left
     // return < 0 means point in right
-    double sideDist(const GlPoint &p);
+    double sideDist(const Point &p);
 
-    bool isRightOf(const GlPoint &p)
+    bool isRightOf(const Point &p)
     {
         return sideDist(p) < 0.0;
     }
 
-    bool isLeftOf(const GlPoint &p)
+    bool isLeftOf(const Point &p)
     {
         return sideDist(p) > 0.0;
     }
 
     // https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
-    bool intersect(Edge *other, GlPoint *point);
+    bool intersect(Edge *other, Point *point);
 
     void recompute();
 
@@ -357,7 +359,7 @@ void Vertex::insertBelow(Edge *e)
                                                                    &this->edge_below.tail);
 }
 
-bool VertexCompare::compare(const GlPoint &a, const GlPoint &b)
+bool VertexCompare::compare(const Point &a, const Point &b)
 {
     return a.y < b.y || (a.y == b.y && a.x < b.x);
 }
@@ -416,12 +418,12 @@ Edge::Edge(Vertex *top, Vertex *bottom, int32_t winding)
 {
 }
 
-double Edge::sideDist(const GlPoint &p)
+double Edge::sideDist(const Point &p)
 {
     return le_a * p.x + le_b * p.y + le_c;
 }
 
-bool Edge::intersect(Edge *other, GlPoint *point)
+bool Edge::intersect(Edge *other, Point *point)
 {
     if (this->top == other->top || this->bottom == other->bottom || this->top == other->bottom ||
         this->bottom == other->top) {
@@ -779,7 +781,7 @@ static int32_t _bezierCurveCount(const Bezier &curve)
     return _bezierCurveCount(left) + _bezierCurveCount(right);
 }
 
-static Bezier _bezFromArc(const GlPoint& start, const GlPoint& end, float radius) {
+static Bezier _bezFromArc(const Point& start, const Point& end, float radius) {
     // Calculate the angle between the start and end points
     float angle = tvg::atan2(end.y - start.y, end.x - start.x);
 
@@ -796,7 +798,7 @@ static Bezier _bezFromArc(const GlPoint& start, const GlPoint& end, float radius
     return bz;
 }
 
-static float _pointLength(const GlPoint& point)
+static float _pointLength(const Point& point)
 {
     return sqrtf((point.x * point.x) + (point.y * point.y));
 }
@@ -830,7 +832,7 @@ enum class Orientation
     CounterClockwise,
 };
 
-static Orientation _calcOrientation(const GlPoint &p1, const GlPoint &p2, const GlPoint &p3)
+static Orientation _calcOrientation(const Point &p1, const Point &p2, const Point &p3)
 {
     float val = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
 
@@ -841,7 +843,7 @@ static Orientation _calcOrientation(const GlPoint &p1, const GlPoint &p2, const 
     }
 }
 
-static Orientation _calcOrientation(const GlPoint &dir1, const GlPoint &dir2)
+static Orientation _calcOrientation(const Point &dir1, const Point &dir2)
 {
     float val = (dir2.x - dir1.x) * (dir1.y + dir2.y);
 
@@ -854,8 +856,8 @@ static Orientation _calcOrientation(const GlPoint &dir1, const GlPoint &dir2)
 
 struct Line
 {
-    GlPoint p1;
-    GlPoint p2;
+    Point p1;
+    Point p2;
 };
 
 static void _lineSplitAt(const Line &line, float at, Line *left, Line *right)
@@ -865,7 +867,7 @@ static void _lineSplitAt(const Line &line, float at, Line *left, Line *right)
     auto dy = ((line.p2.y - line.p1.y) / len) * at;
 
     left->p1 = line.p1;
-    left->p2 = GlPoint{line.p1.x + dx, line.p1.y + dy};
+    left->p2 = Point{line.p1.x + dx, line.p1.y + dy};
 
     right->p1 = left->p2;
     right->p2 = line.p2;
@@ -1363,7 +1365,7 @@ bool Tessellator::checkIntersection(detail::Edge *left, detail::Edge *right, det
         return false;
     }
 
-    GlPoint p;
+    Point p;
 
     if (left->intersect(right, &p) && !std::isinf(p.x) && !std::isinf(p.y)) {
         detail::Vertex *v;
@@ -1699,9 +1701,9 @@ void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point 
                 }
                 mStrokeState.hasMove = true;
                 mStrokeState.firstPt = *pts;
-                mStrokeState.firstPtDir = GlPoint{};
+                mStrokeState.firstPtDir = Point{};
                 mStrokeState.prevPt = *pts;
-                mStrokeState.prevPtDir = GlPoint{};
+                mStrokeState.prevPtDir = Point{};
                 pts++;
             } break;
             case PathCommand::LineTo: {
@@ -1749,26 +1751,26 @@ void Stroker::strokeCap()
 
     if (mStrokeCap == StrokeCap::Butt) return;
     else if (mStrokeCap == StrokeCap::Square) {
-        strokeSquare(mStrokeState.firstPt, GlPoint{-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
+        strokeSquare(mStrokeState.firstPt, Point{-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
         strokeSquare(mStrokeState.prevPt, mStrokeState.prevPtDir);
     } else if (mStrokeCap == StrokeCap::Round) {
-        strokeRound(mStrokeState.firstPt, GlPoint{-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
+        strokeRound(mStrokeState.firstPt, Point{-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
         strokeRound(mStrokeState.prevPt, mStrokeState.prevPtDir);
     }
 
 }
 
-void Stroker::strokeLineTo(const GlPoint &curr)
+void Stroker::strokeLineTo(const Point &curr)
 {
     auto dir = (curr - mStrokeState.prevPt);
-    dir.normalize();
+    normalize(dir);
 
     if (dir.x == 0.f && dir.y == 0.f) {
         // same point
         return;
     }
 
-    auto normal = GlPoint{-dir.y, dir.x};
+    auto normal = Point{-dir.y, dir.x};
 
     auto a = mStrokeState.prevPt + normal * strokeRadius();
     auto b = mStrokeState.prevPt - normal * strokeRadius();
@@ -1819,7 +1821,7 @@ void Stroker::strokeLineTo(const GlPoint &curr)
     mRightBottom.y = std::max(mRightBottom.y, max(max(a.y, b.y), max(c.y, d.y)));
 }
 
-void Stroker::strokeCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPoint &end)
+void Stroker::strokeCubicTo(const Point &cnt1, const Point &cnt2, const Point &end)
 {
     Bezier curve{};
     curve.start = Point{mStrokeState.prevPt.x, mStrokeState.prevPt.y};
@@ -1854,7 +1856,7 @@ void Stroker::strokeClose()
     mStrokeState.hasMove = false;
 }
 
-void Stroker::strokeJoin(const GlPoint &dir)
+void Stroker::strokeJoin(const Point &dir)
 {
     auto orientation = detail::_calcOrientation(mStrokeState.prevPt - mStrokeState.prevPtDir, mStrokeState.prevPt,
                                                 mStrokeState.prevPt + dir);
@@ -1870,7 +1872,7 @@ void Stroker::strokeJoin(const GlPoint &dir)
             return;
         }
 
-        auto normal = GlPoint{-dir.y, dir.x};
+        auto normal = Point{-dir.y, dir.x};
 
         auto p1 = mStrokeState.prevPt + normal * strokeRadius();
         auto p2 = mStrokeState.prevPt - normal * strokeRadius();
@@ -1880,11 +1882,11 @@ void Stroker::strokeJoin(const GlPoint &dir)
         this->strokeRound(oc, p2, mStrokeState.prevPt);
 
     } else {
-        auto normal = GlPoint{-dir.y, dir.x};
-        auto prevNormal = GlPoint{-mStrokeState.prevPtDir.y, mStrokeState.prevPtDir.x};
+        auto normal = Point{-dir.y, dir.x};
+        auto prevNormal = Point{-mStrokeState.prevPtDir.y, mStrokeState.prevPtDir.x};
 
-        GlPoint prevJoin{};
-        GlPoint currJoin{};
+        Point prevJoin{};
+        Point currJoin{};
 
         if (orientation == detail::Orientation::CounterClockwise) {
             prevJoin = mStrokeState.prevPt + prevNormal * strokeRadius();
@@ -1906,7 +1908,7 @@ void Stroker::strokeJoin(const GlPoint &dir)
 }
 
 
-void Stroker::strokeRound(const GlPoint &prev, const GlPoint &curr, const GlPoint &center)
+void Stroker::strokeRound(const Point &prev, const Point &curr, const Point &center)
 {
     if (detail::_calcOrientation(prev, center, curr) == detail::Orientation::Linear) {
         return;
@@ -1933,7 +1935,7 @@ void Stroker::strokeRound(const GlPoint &prev, const GlPoint &curr, const GlPoin
         auto p = prev + dir * t;
 
         auto o_dir = p - center;
-        o_dir.normalize();
+        normalize(o_dir);
 
         auto out = center + o_dir * strokeRadius();
 
@@ -1952,7 +1954,7 @@ void Stroker::strokeRound(const GlPoint &prev, const GlPoint &curr, const GlPoin
     }
 }
 
-void Stroker::strokeMiter(const GlPoint &prev, const GlPoint &curr, const GlPoint &center)
+void Stroker::strokeMiter(const Point &prev, const Point &curr, const Point &center)
 {
     auto pp1 = prev - center;
     auto pp2 = curr - center;
@@ -1992,7 +1994,7 @@ void Stroker::strokeMiter(const GlPoint &prev, const GlPoint &curr, const GlPoin
     mRightBottom.y = std::max(mRightBottom.y, join.y);
 }
 
-void Stroker::strokeBevel(const GlPoint &prev, const GlPoint &curr, const GlPoint &center)
+void Stroker::strokeBevel(const Point &prev, const Point &curr, const Point &center)
 {
     auto a = detail::_pushVertex(mResGlPoints, prev.x, prev.y);
     auto b = detail::_pushVertex(mResGlPoints, curr.x, curr.y);
@@ -2003,14 +2005,14 @@ void Stroker::strokeBevel(const GlPoint &prev, const GlPoint &curr, const GlPoin
     mResIndices->push(c);
 }
 
-void Stroker::strokeSquare(const GlPoint& p, const GlPoint& outDir)
+void Stroker::strokeSquare(const Point& p, const Point& outDir)
 {
-    GlPoint normal{-outDir.y, outDir.x};
+    Point normal{-outDir.y, outDir.x};
 
-    GlPoint a = p + normal * strokeRadius();
-    GlPoint b = p - normal * strokeRadius();
-    GlPoint c = a + outDir * strokeRadius();
-    GlPoint d = b + outDir * strokeRadius();
+    Point a = p + normal * strokeRadius();
+    Point b = p - normal * strokeRadius();
+    Point c = a + outDir * strokeRadius();
+    Point d = b + outDir * strokeRadius();
 
 
     auto ai = detail::_pushVertex(mResGlPoints, a.x, a.y);
@@ -2032,13 +2034,13 @@ void Stroker::strokeSquare(const GlPoint& p, const GlPoint& outDir)
     mRightBottom.y = std::max(mRightBottom.y, max(max(a.y, b.y), max(c.y, d.y)));
 }
 
-void Stroker::strokeRound(const GlPoint& p, const GlPoint& outDir)
+void Stroker::strokeRound(const Point& p, const Point& outDir)
 {
-    GlPoint normal{-outDir.y, outDir.x};
+    Point normal{-outDir.y, outDir.x};
 
-    GlPoint a = p + normal * strokeRadius();
-    GlPoint b = p - normal * strokeRadius();
-    GlPoint c = p + outDir * strokeRadius();
+    Point a = p + normal * strokeRadius();
+    Point b = p - normal * strokeRadius();
+    Point c = p + outDir * strokeRadius();
 
     strokeRound(a, c, p);
     strokeRound(c, b, p);
@@ -2093,7 +2095,7 @@ void DashStroke::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Poi
     }
 }
 
-void DashStroke::dashLineTo(const GlPoint &to)
+void DashStroke::dashLineTo(const Point &to)
 {
     float len = detail::_pointLength(mPtCur - to);
 
@@ -2140,7 +2142,7 @@ void DashStroke::dashLineTo(const GlPoint &to)
     mPtCur = to;
 }
 
-void DashStroke::dashCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPoint &end)
+void DashStroke::dashCubicTo(const Point &cnt1, const Point &cnt2, const Point &end)
 {
     Bezier cur;
     cur.start = Point{mPtCur.x, mPtCur.y};
@@ -2192,19 +2194,19 @@ void DashStroke::dashCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlP
     mPtCur = end;
 }
 
-void DashStroke::moveTo(const GlPoint &pt)
+void DashStroke::moveTo(const Point &pt)
 {
     mPts->push(Point{pt.x, pt.y});
     mCmds->push(PathCommand::MoveTo);
 }
 
-void DashStroke::lineTo(const GlPoint &pt)
+void DashStroke::lineTo(const Point &pt)
 {
     mPts->push(Point{pt.x, pt.y});
     mCmds->push(PathCommand::LineTo);
 }
 
-void DashStroke::cubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPoint &end)
+void DashStroke::cubicTo(const Point &cnt1, const Point &cnt2, const Point &end)
 {
     mPts->push(Point{cnt1.x, cnt1.y});
     mPts->push(Point{cnt2.x, cnt2.y});
